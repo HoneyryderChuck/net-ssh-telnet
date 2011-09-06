@@ -308,6 +308,14 @@ module Net
         end
       end
 
+      def prompt
+        @options["Prompt"]
+      end
+
+      def prompt=(prompt)
+        @options["Prompt"] = prompt
+      end
+
       # Read data from the host until a certain sequence is matched.
       #
       # The +options+ parameter takes an string keyed option Hash or a String.
