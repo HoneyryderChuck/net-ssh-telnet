@@ -1,27 +1,38 @@
 require 'net/ssh'
-require 'telnet'
+require 'net/ssh/telnet'
 
 module Net::SSH
-  class SubShell < Telnet
-    def initialize(options, &block)
-      # rip out the subshell-specific options
-      subshell_options = options.delete "SubShell"
+  class SubShell
+    attr_accessor :connection, :options
+    attr_reader :original_prompt
 
-      super(options) {}
+    def initialize(conn, cmd, options={})
+      @connection=
+          if conn.is_a? Net::SSH::Connection::Session
+            Net::SSH::Telnet.new("Session" => conn)
+          elsif conn.is_a? Net::SSH::Telnet
+            conn
+          else
+            Net::SSH::Telnet.new(conn)
+          end
 
-      # save original prompt, set new prompt, and begin subshell
-      original_prompt = self.prompt
-      self.prompt= subshell_options["Prompt"]
-      output = self.cmd subshell_options["Cmd"]
+      @options= {:prompt => /[$%#>] \z/n, :exit => "exit"}.merge(options)
 
-      # run block in context of the sub-shell
-      yield self, output if block_given?
-
-
-      # restore prompt and exit the sub-shell
-      self.prompt = original_prompt
-      self.cmd "exit"
-      self
+      if block_given?
+        original_prompt= connection.prompt
+        @connection.prompt= @options[:prompt]
+        output= connection.cmd cmd
+        yield self, output
+        @connection.prompt= original_prompt
+        @connection.cmd "exit"
+      end
     end
+
+    def cmd(*args)
+      @connection.cmd *args
+    end
+
+
+
   end
 end
