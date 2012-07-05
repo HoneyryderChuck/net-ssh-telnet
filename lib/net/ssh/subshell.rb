@@ -21,7 +21,7 @@ module Net::SSH
         yield self, output
         exit
       end
-      self
+      [self, output]
     end
 
     def cmd(*args)
