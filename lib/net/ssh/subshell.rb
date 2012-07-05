@@ -50,5 +50,19 @@ module Net::SSH
       end
     end
 
+    #############################
+    ### Specialized SubShells ###
+    #############################
+
+    class SqlPlus < SubShell
+      def defaults
+        super.merge({:prompt => /SQL> \z/n})
+      end
+
+      def run_script(script)
+        cmd "@" + script
+      end
+    end
+
   end
 end
