@@ -4,7 +4,7 @@ require 'net/ssh/telnet'
 module Net::SSH
   class SubShell
     attr_accessor :connection, :options
-    attr_reader :original_prompt
+    attr_reader :original_prompt, :last_output
 
     def initialize(connection, cmd=nil, options={}, &block)
       @connection= tunnel(connection)
@@ -15,7 +15,7 @@ module Net::SSH
 
     def run(cmd, &block)
       @original_prompt= @connection.prompt
-      @connection.prompt= @options[:prompt]
+      @connection.prompt= Regexp.union(@options[:prompt], @original_prompt)
       output= @connection.cmd(cmd)
       if block_given?
         yield self, output
@@ -25,12 +25,12 @@ module Net::SSH
     end
 
     def cmd(*args)
-      @connection.cmd *args
+      @last_output = @connection.cmd *args
     end
 
     def exit
       @connection.prompt= @original_prompt
-      @connection.cmd @options[:exit]
+      @connection.cmd @options[:exit] unless @last_output.match(@original_prompt)
     end
 
     def defaults
