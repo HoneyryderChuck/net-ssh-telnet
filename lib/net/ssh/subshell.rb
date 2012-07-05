@@ -16,7 +16,7 @@ module Net::SSH
             Net::SSH::Telnet.new(conn)
           end
 
-      @options= {:prompt => /[$%#>] \z/n, :exit => "exit"}.merge(options)
+      @options= defaults.merge(options)
 
       if block_given?
         original_prompt= connection.prompt
@@ -32,7 +32,9 @@ module Net::SSH
       @connection.cmd *args
     end
 
-
+    def defaults
+      {:prompt => /[$%#>] \z/n, :exit => "exit"}
+    end
 
   end
 end
