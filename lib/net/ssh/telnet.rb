@@ -306,6 +306,16 @@ module SSH
       end
     end
 
+    # Wait until data becomes available, optionally with a timeout.                
+    #                                                                              
+    # +time_out+ can be either the number of seconds before timing out             
+    # or nil for no timeout.                                                       
+    # Returns true if data is available and false if the timeout occurred.         
+    #
+    def wait_readable(sock, time_out=nil)
+      IO::select([sock], nil, nil, time_out)
+    end
+
     # Read data from the host until a certain sequence is matched.
     #
     # The +options+ parameter takes an string keyed option Hash or a String.
@@ -350,7 +360,7 @@ module SSH
       rest = ''
       sock = @ssh.transport.socket
 
-      until prompt === line and @buf == "" and (@eof or (not sock.closed? and not IO::select([sock], nil, nil, waittime)))
+      until prompt === line and @buf == "" and (@eof or (not sock.closed? and ((!waittime || waittime ==0) or not wait_readable(sock, waittime))))
         while @buf == "" and !@eof
           # timeout is covered by net-ssh
           begin
